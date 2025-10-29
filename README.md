@@ -22,7 +22,9 @@
 
 2. 准备 Excel 表（N 个）  
    - 按示例格式准备表格（推荐保留表头以便按列名映射）。  
-   - 示例列（可按项目约定）：id, name, groupId, value。  
+   - 示例列（可按项目约定）：id, name, groupId, value。
+   - 注意Excel目录下有个manifest.txt，里面记录的表格文件才是需要程序解析的，不填写不会生成代码之类的，会被过滤掉。
+   - xlsx文件的第一个sheet，list中也同理，记录哪些sheet是需要生成代码的，否则会被过滤掉。
 
 3. 修改生成器配置 config.json（位于 RabiConfigLib 工具目录）  
    - 将 NAME_SPACE_NAME 设置为你的 Mod 命名空间（例如 `Shadowrabbit.Mod.Configs`）。  
@@ -31,7 +33,7 @@
 
 4. 运行生成器（自动生成代码与文本）  
    - 在生成器目录运行：  
-     run.exe --config config.json  
+     run.exe
    - 生成结果示例：`Configs/CfgExample.cs`, `Configs/RowCfgExample.cs`, 以及 `Assets/CfgExample.txt`（路径由 config.json 决定）。  
 
 5. 在 Mod 启动入口调用两行 API（运行时初始化）  
