@@ -17,7 +17,8 @@
 
 ## 快速开始（5 步）
 1. 引用运行时库  
-   - 在你的 Mod 项目中添加 RabiConfigLib 的运行时库（RabiConfigLib.dll、UnityPackage 或相等方式），确保运行时可以加载该库。  
+   - 在你的 Mod 项目中添加 RabiConfigLib 的运行时库（RabiConfigLib.dll、UnityPackage 或相等方式），确保运行时可以加载该库。
+   - 从ExampleProject拷贝RabiConfig目录到自己的Mod根目录下(内部包含生成器run.exe、示例excel表、config.json配置文件)
 
 2. 准备 Excel 表（N 个）  
    - 按示例格式准备表格（推荐保留表头以便按列名映射）。  
