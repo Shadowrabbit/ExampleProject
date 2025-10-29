@@ -56,3 +56,5 @@
 2. 确保生成的 .txt 数据在运行时能被 ConfigManager.Init 指定的路径找到（通常放在 Assets/ 下）。  
 3. 在 Mod 启动时调用 ConfigManager.Init(...) 与 每个表的 GenerateConfigs() 完成运行时数据生成。  
 4. 如需热重载，可通过 ConfigManager.Clear() + Init() 或再次调用 GenerateConfigs() 完成热刷。
+
+示例工程参考：https://github.com/Shadowrabbit/ExampleProject
