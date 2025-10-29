@@ -1,0 +1,3 @@
+UnitOnChain|||Assets/AddressableAssets/Sounds/Sfxs/SfxUnitOnDie.ogg|11.22|22|True|true,false,false|1:sss,2:ddd,3:asd|1
+UnitOnDie|||Assets/AddressableAssets/Sounds/Sfxs/SfxUnitOnDie.ogg|1|1|False|true,false,false|1:sss,2:ddd,3:asd|2
+HeroOnHit|||Assets/AddressableAssets/Sounds/Sfxs/SfxHeroOnHit.ogg|1|1|False|true,false,false|1:sss,2:ddd,3:asd|2
