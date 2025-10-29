@@ -1,60 +1,285 @@
-```markdown
-# Escape from Duckov — ExampleProject
+# RabiConfigLib 使用指南
 
-轻量级 Unity Mod 配置读取示例，演示如何通过 RabiConfigLib 工具链把 Excel 表生成运行时代码与数据（.cs + .txt），并在 Mod 启动时通过强类型 API 访问配置。
+轻量级 Unity Mod 配置读取框架，演示如何通过 RabiConfigLib 工具链把 Excel 表生成运行时代码与数据（.cs + .txt），并在 Mod 启动时通过强类型 API 访问配置。
 
-核心流程：Excel（多表） → run.exe（RabiConfigLib）→ 生成 .cs 强类型代码 与 .txt 数据 → Mod 引用运行库并两行初始化访问。
+**核心流程：** Excel（多表） → run.exe（RabiConfigLib）→ 生成 .cs 强类型代码 与 .txt 数据 → Mod 引用运行库并两行初始化访问。
 
-## 核心说明
-- 生成阶段：使用 RabiConfigLib 的生成器（run.exe）读取 Excel，生成强类型 C# 代码与导出文本数据。
-- 运行阶段：Mod 引用 RabiConfigLib 运行库，运行时读取生成的 .txt 并通过生成的强类型 API 访问数据（两行初始化调用）。
+## 目录
+1. [下载并安装工程](#1-下载并安装工程)
+2. [配置项目引用](#2-配置项目引用)
+3. [拷贝 RabiConfig 工具目录](#3-拷贝-rabiconfig-工具目录)
+4. [配置生成器](#4-配置生成器)
+5. [准备 Excel 数据](#5-准备-excel-数据)
+6. [配置 manifest.txt](#6-配置-manifesttxt)
+7. [设置 Excel Sheet](#7-设置-excel-sheet)
+8. [运行生成器](#8-运行生成器)
+9. [在 Mod 中使用](#9-在-mod-中使用)
+10. [常见问题](#常见问题)
 
-## 主要特性
-- Excel 驱动：按示例格式准备 N 个 Excel 表（支持表头）。
-- 自动生成：run.exe 自动生成强类型 .cs 文件与导出的 .txt 数据。
-- 运行时库：RabiConfigLib 提供读取/加载运行时的基础能力。
-- 极简接入：两行初始化完成运行时数据生成。
+---
 
-## 快速开始（5 步）
-1. 引用运行时库  
-   - 在你的 Mod 项目中添加 RabiConfigLib 的运行时库（RabiConfigLib.dll、UnityPackage 或相等方式），确保运行时可以加载该库。
-   - 从ExampleProject拷贝RabiConfig目录到自己的Mod根目录下(内部包含生成器run.exe、示例excel表、config.json配置文件)
+## 1. 下载并安装工程
 
-2. 准备 Excel 表（N 个）  
-   - 按示例格式准备表格（推荐保留表头以便按列名映射）。  
-   - 示例列（可按项目约定）：id, name, groupId, value。
-   - 注意Excel目录下有个manifest.txt，里面记录的表格文件才是需要程序解析的，不填写不会生成代码之类的，会被过滤掉。
-   - xlsx文件的第一个sheet，list中也同理，记录哪些sheet是需要生成代码的，否则会被过滤掉。
+### 1.1 下载 RabiConfigLib
+从创意工坊或代码仓库下载 RabiConfigLib 工程。
 
-3. 修改生成器配置 config.json（位于 RabiConfigLib 工具目录）  
-   - 将 NAME_SPACE_NAME 设置为你的 Mod 命名空间（例如 `Shadowrabbit.Mod.Configs`）。  
-   - 将 CODE_EXPORT_FOLDER 设置为生成代码的目标目录（指向你的 Mod 源码目录或会被编译进 Mod 的文件夹）。  
-   - 将 DATA_EXPORT_FOLDER 设置为生成数据（.txt）的目标目录（建议指向 Mod 的 Assets 目录）。  
+---
 
-4. 运行生成器（自动生成代码与文本）  
-   - 在生成器目录运行：  
-     run.exe
-   - 生成结果示例：`Configs/CfgExample.cs`, `Configs/RowCfgExample.cs`, 以及 `Assets/CfgExample.txt`（路径由 config.json 决定）。  
+## 2. 配置项目引用
 
-5. 在 Mod 启动入口调用两行 API（运行时初始化）  
-   ```csharp
-   // 1) 初始化运行时配置管理（传入包含 Assets/ 的 Mod 根路径）
-   ConfigManager.Init(modRootPath);
+### 2.1 找到 ExampleProject.csproj
+如果你有项目，需要创建自己的 Mod 项目。
 
-   // 2) 调用生成的表级 API 生成运行时强类型数据（示例表名：CfgExample）
-   CfgExample.GenerateConfigs();
-   ```
+### 2.2 修改游戏目录
+在 `ExampleProject.csproj`（或你的项目文件）中，找到游戏目录配置：
+```xml
+<PropertyGroup>
+    <DuckovPath>D:\SteamLibrary\steamapps\common\Escape from Duckov</DuckovPath>
+</PropertyGroup>
+```
+将 `DuckovPath` 修改为你实际的游戏安装路径。
 
-注意事项
-- NAME_SPACE_NAME 必须是合法的 C# 命名空间（点分隔的标识符，不能含空格或非法字符）。  
-- CODE_EXPORT_FOLDER 与 DATA_EXPORT_FOLDER 可使用相对路径（相对于 run.exe）或绝对路径；确保生成器有写入权限。  
-- 推荐把生成代码目录配置为 Mod 的源码目录或会被包含进 Mod 程序集的目录，这样生成后可直接编译。  
-- 若保留表头（IncludeHeader），生成器会尝试按列名映射；否则按列序解析。
+### 2.3 配置 RabiConfigLib 引用
+确保项目文件中引用了 RabiConfigLib：
+```xml
+<ItemGroup>
+    <Reference Include="RabiConfigLib">
+        <HintPath>..\..\RabiConfigLib\RabiConfigLib.dll</HintPath>
+        <Private>False</Private>
+    </Reference>
+</ItemGroup>
+```
+或者使用相对路径指向 RabiConfigLib 的 DLL 文件位置。
 
-## 生成后整合到 Mod
-1. 将生成的 .cs 文件纳入你的 Mod 源码（或放到会被编译的位置）。  
-2. 确保生成的 .txt 数据在运行时能被 ConfigManager.Init 指定的路径找到（通常放在 Assets/ 下）。  
-3. 在 Mod 启动时调用 ConfigManager.Init(...) 与 每个表的 GenerateConfigs() 完成运行时数据生成。  
-4. 如需热重载，可通过 ConfigManager.Clear() + Init() 或再次调用 GenerateConfigs() 完成热刷。
+---
 
-示例工程参考：https://github.com/Shadowrabbit/ExampleProject
+## 3. 拷贝 RabiConfig 工具目录
+
+### 3.1 找到 RabiConfig 工具目录
+RabiConfig 工具目录通常包含：
+- `run.exe` - 代码生成器主程序
+- `config.json` - 生成器配置文件
+- `manifest.txt` - 表格清单文件
+- 其他工具依赖文件
+
+### 3.2 拷贝到你的项目
+将整个 `RabiConfig` 目录拷贝到你的 Mod 项目目录中，例如：
+```
+你的Mod项目\
+├── RabiConfig\
+│   ├── run.exe
+│   ├── config.json
+│   ├── manifest.txt
+│   └── ...
+├── Assets\
+└── ...
+```
+
+---
+
+## 4. 配置生成器
+
+### 4.1 打开 config.json
+编辑 `RabiConfig\config.json` 文件。
+
+### 4.2 配置命名空间
+找到 `NAME_SPACE_NAME` 字段，设置为你的 Mod 命名空间：
+```json
+{
+    "NAME_SPACE_NAME": "YourModName",
+}
+```
+
+**注意事项：**
+- 命名空间必须是合法的 C# 标识符
+- 使用点分隔，不能包含空格或特殊字符
+
+### 4.3 配置代码输出目录
+找到 `CODE_EXPORT_FOLDER` 字段，设置为生成代码的目标目录：
+```json
+{
+    "CODE_EXPORT_FOLDER": "../YourModName",
+}
+```
+
+**建议：**
+- 指向你的 Mod 源码目录
+- 确保该目录会被编译进 Mod 程序集
+- 可以使用相对路径（相对于 run.exe）或绝对路径
+
+### 4.4 配置数据输出目录
+找到 `DATA_EXPORT_FOLDER` 字段，设置为生成数据文件的目标目录：
+```json
+{
+    "DATA_EXPORT_FOLDER": "../Assets/Game",
+}
+```
+
+**建议：**
+- 建议使用默认路径，不修改
+
+---
+
+## 5. 准备 Excel 数据
+
+### 5.1 创建 Excel 文件
+按照你的数据需求创建 Excel 文件（.xlsx 格式）。
+
+### 5.2 表格格式要求
+- **第一行**：表头（列名），例如：`key | Annotate | Defname | value | ...`
+- **第一列**：通常作为主键（key），用于标识每一行数据
+- **分隔符**：使用 `|`（竖线）分隔列（生成器会自动处理）
+- **数据行**：从第二行开始填写实际数据
+
+### 5.3 Excel 示例格式
+```
+key          | name      | groupId | value | description
+item_001     | 物品A     | 1       | 100   | 这是一个物品
+item_002     | 物品B     | 2       | 200   | 这是另一个物品
+```
+
+### 5.4 支持的数据类型
+- `int` - 整数
+- `float` - 浮点数
+- `string` - 字符串
+- `bool` - 布尔值
+- `Vector3` - 格式：`x-y-z`，例如：`1.5-2.0-3.5`
+- `Dictionary<TK, TV>` - 格式：`key1:value1,key2:value2`
+- `List<T>` - 格式：`value1,value2,value3`
+
+---
+
+## 6. 配置 manifest.txt
+
+### 6.1 打开 manifest.txt
+编辑 `RabiConfig\manifest.txt` 文件。
+
+### 6.2 添加表格配置
+在 `manifest.txt` 中列出需要生成代码和数据的 Excel 文件：
+
+```
+# 格式：Excel文件名
+# 例如：
+ItemConfig.xlsx
+WeaponConfig.xlsx
+SkillConfig.xlsx
+```
+
+---
+
+## 7. 设置 Excel Sheet
+
+### 7.1 理解 Sheet 机制
+一个 Excel 文件可以包含多个 Sheet（工作表），但只有指定的 Sheet 会被处理。
+
+在excel第一个sheet里，每行填写一个需要解析的sheet名，允许这个sheet被解析。
+
+---
+
+## 8. 运行生成器
+
+双击run.exe
+
+### 8.3 检查生成结果
+生成完成后，检查以下位置：
+
+**代码文件（CODE_EXPORT_FOLDER）：**
+```
+YourModProject\Configs\
+├── CfgItemConfig.cs        # 主配置类
+├── RowCfgItemConfig.cs     # 行数据类
+├── CfgWeaponConfig.cs
+└── RowCfgWeaponConfig.cs
+```
+
+**数据文件（DATA_EXPORT_FOLDER）：**
+```
+YourModProject\Assets\Configs\
+├── CfgItemConfig.txt
+├── CfgWeaponConfig.txt
+└── ...
+```
+
+### 8.4 生成文件说明
+- `Cfg[TableName].cs` - 主配置类，包含 `GenerateConfigs()` 方法
+- `RowCfg[TableName].cs` - 行数据类，表示表格中的一行数据
+- `Cfg[TableName].txt` - 数据文件，运行时读取的文本数据
+
+---
+
+## 9. 在 Mod 中使用
+
+### 9.1 引用生成的代码
+确保生成的 `.cs` 文件被包含在你的 Mod 项目中，并能够正确编译。
+
+### 9.2 在 Mod 入口初始化
+在你的 Mod 入口类（继承自 `ModBehaviour`）中调用初始化代码：
+
+```csharp
+using RabiConfigLib;
+using YourModName; // 你的命名空间
+
+public class YourMod : ModBehaviour
+{
+    public override void OnLoad()
+    {
+        // 1. 初始化配置管理器
+        // 传入 Mod 的根路径（包含 Assets 目录的路径）
+        var modRootPath = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+        ConfigManager.Init(modRootPath);
+        
+        // 2. 生成所有配置表的运行时数据
+        CfgItemConfig.GenerateConfigs();
+        CfgWeaponConfig.GenerateConfigs();
+        // ... 其他配置表
+        
+        UnityEngine.Debug.Log("[YourMod] Configs initialized!");
+    }
+}
+```
+
+### 9.3 获取配置数据
+通过 `ConfigManager` 获取配置数据：
+
+```csharp
+// 通过 key 获取单行数据
+var cfg = ConfigManager.Instance.cfgExample; // 示例配置
+PrintRow(DefExample.DUnitOnChain, cfg[DefExample.DUnitOnChain]);
+```
+
+---
+
+## 常见问题
+
+### Q1: 生成器找不到 Excel 文件？
+**A:** 确保 Excel 文件放在 `RabiConfig` 目录下，或修改 `config.json` 中的 Excel 文件路径配置。
+
+### Q2: 生成的代码编译错误？
+**A:** 检查命名空间是否正确，确保引用了 `RabiConfigLib.dll`。
+
+### Q3: 运行时找不到数据文件？
+**A:** 确保数据文件在 `Assets` 目录下，且 `ConfigManager.Init()` 传入的路径正确。
+
+### Q4: 如何热重载配置？
+**A:** 调用 `ConfigManager.Clear()` 然后重新调用 `GenerateConfigs()`。
+
+### Q5: 支持哪些数据类型？
+**A:** 支持 int、float、string、bool、Vector3、Dictionary<K,V>、List<T> 等。
+
+---
+
+## 总结
+
+使用 RabiConfigLib 的完整流程：
+1. ✅ 下载并放置到 Mods 目录
+2. ✅ 配置项目引用和路径
+3. ✅ 拷贝 RabiConfig 工具目录
+4. ✅ 修改 config.json 配置命名空间和输出目录
+5. ✅ 准备 Excel 数据表
+6. ✅ 配置 manifest.txt 指定要处理的表格
+7. ✅ 在 Excel 中设置 Sheet 标记
+8. ✅ 运行 run.exe 生成代码和数据
+9. ✅ 在 Mod 入口调用两行初始化代码
+10. ✅ 通过 ConfigManager 获取配置数据
+
+现在你可以开始使用 RabiConfigLib 管理你的 Mod 配置数据了！
